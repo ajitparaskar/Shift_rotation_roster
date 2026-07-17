@@ -1,0 +1,23 @@
+@baseUrl = https://localhost:7000/api
+
+### Get all leave requests
+GET {{baseUrl}}/leave
+
+### Request leave
+POST {{baseUrl}}/leave
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "startDate": "2026-08-01",
+  "endDate": "2026-08-03",
+  "reason": "Family function"
+}
+
+### Approve leave
+PATCH {{baseUrl}}/leave/1/status
+Content-Type: application/json
+
+{
+  "status": 1
+}

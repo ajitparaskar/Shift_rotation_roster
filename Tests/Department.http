@@ -1,0 +1,25 @@
+@baseUrl = https://localhost:7000/api
+
+### Get all departments
+GET {{baseUrl}}/department
+
+### Create department
+POST {{baseUrl}}/department
+Content-Type: application/json
+
+{
+  "name": "Sales",
+  "description": "Sales and business development"
+}
+
+### Update department
+PUT {{baseUrl}}/department/1
+Content-Type: application/json
+
+{
+  "name": "Customer Support",
+  "description": "Updated description"
+}
+
+### Delete department
+DELETE {{baseUrl}}/department/1

@@ -1,0 +1,21 @@
+@baseUrl = https://localhost:7000/api
+
+### Get all employees
+GET {{baseUrl}}/employee
+
+### Get employees by department
+GET {{baseUrl}}/employee/department/1
+
+### Create employee
+POST {{baseUrl}}/employee
+Content-Type: application/json
+
+{
+  "fullName": "Neha Verma",
+  "email": "neha.verma@company.com",
+  "hireDate": "2024-01-15",
+  "departmentId": 1
+}
+
+### Deactivate employee
+PATCH {{baseUrl}}/employee/1/deactivate

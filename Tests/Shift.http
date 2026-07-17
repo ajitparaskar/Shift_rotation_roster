@@ -1,0 +1,15 @@
+@baseUrl = https://localhost:7000/api
+
+### Get all shifts
+GET {{baseUrl}}/shift
+
+### Create shift
+POST {{baseUrl}}/shift
+Content-Type: application/json
+
+{
+  "name": "Weekend Morning",
+  "startTime": "08:00:00",
+  "endTime": "16:00:00",
+  "capacity": 2
+}

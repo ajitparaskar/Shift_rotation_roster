@@ -1,0 +1,15 @@
+@baseUrl = https://localhost:7000/api
+
+### Get all preferences
+GET {{baseUrl}}/preference
+
+### Set preference (employee 1 prefers Morning shift)
+POST {{baseUrl}}/preference
+Content-Type: application/json
+
+{
+  "employeeId": 1,
+  "shiftId": 1,
+  "preferenceLevel": 1,
+  "dayOfWeek": null
+}

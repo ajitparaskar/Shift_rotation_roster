@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shift Rotation — Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151c;
+    --panel:#1b2029;
+    --panel-alt:#20262f;
+    --border:#2a303c;
+    --text:#edeff2;
+    --muted:#8a93a3;
+    --morning:#f2b84b;
+    --evening:#d8577a;
+    --night:#6472e4;
+    --expert:#4caf7d;
+    --intermediate:#5b9bd1;
+    --trainee:#c9903f;
+    --danger:#e2574c;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+  code,.mono{font-family:'IBM Plex Mono',monospace;}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#151922,#12151c);
+    position:sticky;top:0;z-index:10;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--expert);box-shadow:0 0 0 3px rgba(76,175,125,.15);animation:pulse 2.2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(76,175,125,.35);}70%{box-shadow:0 0 0 6px rgba(76,175,125,0);}100%{box-shadow:0 0 0 0 rgba(76,175,125,0);}}
+  @media (prefers-reduced-motion: reduce){.brand .dot{animation:none;}}
+  .brand h1{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;letter-spacing:.08em;margin:0;text-transform:uppercase;}
+  .brand span{color:var(--muted);font-size:12px;}
+  #clock{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:12px;}
+
+  nav{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);overflow-x:auto;}
+  nav button{
+    background:none;border:none;color:var(--muted);padding:12px 16px;font-size:13px;font-weight:600;
+    font-family:'IBM Plex Mono',monospace;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+  }
+  nav button:hover{color:var(--text);}
+  nav button.active{color:var(--text);border-bottom-color:var(--morning);}
+
+  main{padding:24px;max-width:1280px;margin:0 auto;}
+  .tab{display:none;}
+  .tab.active{display:block;animation:fade .18s ease-out;}
+  @keyframes fade{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:none;}}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:18px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-family:'IBM Plex Mono',monospace;}
+  select,input{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);
+    padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;
+  }
+  select:focus,input:focus{outline:2px solid var(--night);outline-offset:1px;}
+  button.btn{
+    background:var(--panel-alt);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);
+    padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+  }
+  button.btn:hover{border-color:var(--morning);}
+  button.btn.primary{background:var(--morning);color:#1a1408;border-color:var(--morning);}
+  button.btn.primary:hover{filter:brightness(1.08);}
+  button.btn.danger{border-color:var(--danger);color:var(--danger);}
+  button.btn:focus-visible{outline:2px solid var(--night);outline-offset:2px;}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:18px;}
+  .panel h2{font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 14px;}
+
+  /* Week grid */
+  .grid-wrap{overflow-x:auto;}
+  table.grid{width:100%;border-collapse:collapse;min-width:760px;}
+  table.grid th{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.05em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);
+  }
+  table.grid td{vertical-align:top;padding:6px;border-bottom:1px solid var(--border);}
+  .shift-label{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;display:flex;align-items:center;gap:8px;}
+  .shift-swatch{width:8px;height:20px;border-radius:2px;display:inline-block;}
+  .sw-morning{background:var(--morning);} .sw-evening{background:var(--evening);} .sw-night{background:var(--night);}
+
+  .cell{min-width:110px;}
+  .slot{
+    border-left:3px solid var(--border);background:var(--panel-alt);border-radius:4px;
+    padding:6px 8px;margin-bottom:4px;font-size:12px;line-height:1.4;
+  }
+  .slot.morning{border-left-color:var(--morning);}
+  .slot.evening{border-left-color:var(--evening);}
+  .slot.night{border-left-color:var(--night);}
+  .slot .name{font-weight:600;}
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;
+    margin-left:5px;vertical-align:middle;
+  }
+  .badge.E{background:rgba(76,175,125,.18);color:var(--expert);}
+  .badge.I{background:rgba(91,155,209,.18);color:var(--intermediate);}
+  .badge.T{background:rgba(201,144,63,.18);color:var(--trainee);}
+  .slot.vacant{border:1px dashed var(--danger);background:transparent;color:var(--danger);}
+  .slot.vacant button{margin-top:4px;}
+
+  .warnings{list-style:none;margin:0;padding:0;}
+  .warnings li{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 10px;border-radius:4px;
+    background:rgba(226,87,76,.08);border-left:3px solid var(--danger);margin-bottom:6px;color:#f2a8a2;
+  }
+  .warnings li.info{background:rgba(242,184,75,.08);border-left-color:var(--morning);color:#f0d9a8;}
+  .summary-row{display:flex;gap:24px;margin-bottom:14px;flex-wrap:wrap;}
+  .stat{font-family:'IBM Plex Mono',monospace;}
+  .stat .n{font-size:22px;font-weight:700;display:block;}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+
+  table.data{width:100%;border-collapse:collapse;}
+  table.data th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:8px;border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;}
+  table.data td{padding:8px;border-bottom:1px solid var(--border);font-size:13px;}
+  table.data tr:hover td{background:var(--panel-alt);}
+
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;}
+  .form-grid label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'IBM Plex Mono',monospace;display:block;margin-bottom:4px;}
+  .checkbox-row{display:flex;align-items:center;gap:6px;padding-top:8px;}
+  .msg{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 10px;border-radius:4px;margin-top:10px;}
+  .msg.ok{background:rgba(76,175,125,.1);color:var(--expert);border-left:3px solid var(--expert);}
+  .msg.err{background:rgba(226,87,76,.1);color:var(--danger);border-left:3px solid var(--danger);}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:900px){.two-col{grid-template-columns:1fr;}}
+  .muted{color:var(--muted);}
+  .pill{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 6px;border-radius:10px;border:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Shift Rotation — Ops Console</h1>
+  </div>
+  <div id="clock" class="mono"></div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="schedule" class="active">Schedule</button>
+  <button data-tab="employees">Employees</button>
+  <button data-tab="orgshifts">Departments &amp; Shifts</button>
+  <button data-tab="leave">Leave</button>
+  <button data-tab="policy">Policy</button>
+  <button data-tab="override">Manual Override</button>
+</nav>
+
+<main>
+
+  <!-- ===================== SCHEDULE TAB ===================== -->
+  <section class="tab active" id="tab-schedule">
+    <div class="toolbar">
+      <div class="field">
+        <label>Department</label>
+        <select id="sch-dept"></select>
+      </div>
+      <div class="field">
+        <label>Any date in week</label>
+        <input type="date" id="sch-week" />
+      </div>
+      <button class="btn" id="btn-load-week">Load Week</button>
+      <button class="btn primary" id="btn-gen-week">Generate Week</button>
+    </div>
+
+    <div class="panel">
+      <h2 id="week-range-label">Week — none loaded</h2>
+      <div class="summary-row" id="week-stats"></div>
+      <div class="grid-wrap">
+        <table class="grid" id="week-grid"></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Warnings &amp; Notices</h2>
+      <ul class="warnings" id="week-warnings"><li class="muted" style="background:none;border:none;color:var(--muted)">No warnings yet — generate or load a week.</li></ul>
+    </div>
+  </section>
+
+  <!-- ===================== EMPLOYEES TAB ===================== -->
+  <section class="tab" id="tab-employees">
+    <div class="panel">
+      <h2>Add Employee</h2>
+      <div class="form-grid">
+        <div><label>Full Name</label><input id="emp-name" /></div>
+        <div><label>Email</label><input id="emp-email" /></div>
+        <div><label>Hire Date</label><input type="date" id="emp-hire" /></div>
+        <div><label>Department</label><select id="emp-dept"></select></div>
+        <div><label>Proficiency</label>
+          <select id="emp-prof">
+            <option value="0">Trainee</option>
+            <option value="1" selected>Intermediate</option>
+            <option value="2">Expert</option>
+          </select>
+        </div>
+        <div><label>Team</label><input id="emp-team" placeholder="L1 Support, DBA..." /></div>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="emp-night" checked /><label style="margin:0;text-transform:none;">Eligible for Night shift</label></div>
+      <div style="margin-top:12px;"><button class="btn primary" id="btn-add-emp">Add Employee</button></div>
+      <div id="emp-msg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>All Employees</h2>
+      <table class="data" id="emp-table">
+        <thead><tr><th>Name</th><th>Dept</th><th>Proficiency</th><th>Night</th><th>Team</th><th>Status</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== DEPARTMENTS & SHIFTS TAB ===================== -->
+  <section class="tab" id="tab-orgshifts">
+    <div class="two-col">
+      <div class="panel">
+        <h2>Departments</h2>
+        <div class="form-grid">
+          <div><label>Name</label><input id="dept-name" /></div>
+          <div><label>Description</label><input id="dept-desc" /></div>
+        </div>
+        <button class="btn primary" id="btn-add-dept">Add Department</button>
+        <div id="dept-msg"></div>
+        <table class="data" style="margin-top:14px;">
+          <thead><tr><th>Name</th><th>Description</th></tr></thead>
+          <tbody id="dept-table"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>Shifts</h2>
+        <div class="form-grid">
+          <div><label>Name</label><input id="shift-name" placeholder="Morning / Evening / Night" /></div>
+          <div><label>Start</label><input type="time" id="shift-start" /></div>
+          <div><label>End</label><input type="time" id="shift-end" /></div>
+          <div><label>Capacity</label><input type="number" id="shift-capacity" value="2" min="1" /></div>
+        </div>
+        <button class="btn primary" id="btn-add-shift">Add Shift</button>
+        <div id="shift-msg"></div>
+        <table class="data" style="margin-top:14px;">
+          <thead><tr><th>Name</th><th>Start</th><th>End</th><th>Capacity</th></tr></thead>
+          <tbody id="shift-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Holidays</h2>
+      <div class="form-grid">
+        <div><label>Name</label><input id="hol-name" /></div>
+        <div><label>Date</label><input type="date" id="hol-date" /></div>
+        <div class="checkbox-row"><input type="checkbox" id="hol-recurring" /><label style="margin:0;text-transform:none;">Recurs yearly</label></div>
+      </div>
+      <button class="btn primary" id="btn-add-hol">Add Holiday</button>
+      <div id="hol-msg"></div>
+      <table class="data" style="margin-top:14px;">
+        <thead><tr><th>Name</th><th>Date</th><th>Recurring</th></tr></thead>
+        <tbody id="hol-table"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== LEAVE TAB ===================== -->
+  <section class="tab" id="tab-leave">
+    <div class="panel">
+      <h2>Request Leave</h2>
+      <div class="form-grid">
+        <div><label>Employee</label><select id="leave-emp"></select></div>
+        <div><label>Start Date</label><input type="date" id="leave-start" /></div>
+        <div><label>End Date</label><input type="date" id="leave-end" /></div>
+        <div><label>Reason</label><input id="leave-reason" /></div>
+      </div>
+      <button class="btn primary" id="btn-add-leave">Submit Request</button>
+      <div id="leave-msg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>All Leave Requests</h2>
+      <table class="data">
+        <thead><tr><th>Employee</th><th>Start</th><th>End</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+        <tbody id="leave-table"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== POLICY TAB ===================== -->
+  <section class="tab" id="tab-policy">
+    <div class="panel">
+      <h2>Active Scheduling Policy</h2>
+      <p class="muted" style="margin-top:0;">These thresholds drive the Rotation Engine — nothing is hardcoded in code. Change them here and regenerate the schedule.</p>
+      <div class="form-grid">
+        <div><label>Max Consecutive Working Days</label><input type="number" id="pol-maxdays" /></div>
+        <div><label>Weekly Off Days</label><input type="number" id="pol-offdays" /></div>
+        <div><label>Minimum Rest Hours</label><input type="number" id="pol-rest" /></div>
+        <div class="checkbox-row"><input type="checkbox" id="pol-expert" /><label style="margin:0;text-transform:none;">Require Expert per shift</label></div>
+      </div>
+      <button class="btn primary" id="btn-save-policy">Save Policy</button>
+      <div id="policy-msg"></div>
+    </div>
+  </section>
+
+  <!-- ===================== MANUAL OVERRIDE TAB ===================== -->
+  <section class="tab" id="tab-override">
+    <div class="panel">
+      <h2>Report Sudden / On-Spot Leave</h2>
+      <p class="muted" style="margin-top:0;">Vacates the employee's shift for that date and suggests fair replacements. Nothing is auto-assigned — a lead picks below.</p>
+      <div class="form-grid">
+        <div><label>Employee</label><select id="ov-emp"></select></div>
+        <div><label>Date</label><input type="date" id="ov-date" /></div>
+        <div><label>Reason</label><input id="ov-reason" /></div>
+      </div>
+      <button class="btn danger" id="btn-report-leave">Report Emergency Leave</button>
+      <div id="ov-msg"></div>
+    </div>
+
+    <div class="panel" id="ov-candidates-panel" style="display:none;">
+      <h2>Suggested Replacements</h2>
+      <table class="data">
+        <thead><tr><th>Employee</th><th>Proficiency</th><th>Shifts This Week</th><th>Prefers Shift</th><th></th></tr></thead>
+        <tbody id="ov-candidates-table"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Manual Reassign (any assignment ID)</h2>
+      <div class="form-grid">
+        <div><label>Assignment ID</label><input type="number" id="ra-assignment" /></div>
+        <div><label>New Employee</label><select id="ra-emp"></select></div>
+        <div><label>Notes</label><input id="ra-notes" /></div>
+      </div>
+      <button class="btn primary" id="btn-reassign">Reassign</button>
+      <div id="ra-msg"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+const API = '/api';
+let departments = [], employees = [], shifts = [], lastVacantAssignmentId = null;
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts ? Object.assign({headers:{'Content-Type':'application/json'}}, opts) : undefined);
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { const j = await res.json(); msg = j.message || JSON.stringify(j); } catch(e){}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+const get = (p) => api(p);
+const post = (p, body) => api(p, { method:'POST', body: JSON.stringify(body) });
+const put  = (p, body) => api(p, { method:'PUT', body: JSON.stringify(body) });
+const patch= (p, body) => api(p, { method:'PATCH', body: JSON.stringify(body) });
+
+function msgBox(el, text, ok) {
+  el.innerHTML = `<div class="msg ${ok?'ok':'err'}">${text}</div>`;
+  setTimeout(()=>{ el.innerHTML=''; }, 6000);
+}
+
+// ---- clock ----
+function tickClock(){
+  document.getElementById('clock').textContent = new Date().toLocaleString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+tickClock(); setInterval(tickClock, 30000);
+
+// ---- tabs ----
+document.getElementById('tabs').addEventListener('click', (e) => {
+  if (e.target.tagName !== 'BUTTON') return;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('tab-' + e.target.dataset.tab).classList.add('active');
+});
+
+// ---- shift color helper ----
+function shiftClass(name){
+  const n = (name||'').toLowerCase();
+  if (n.includes('morn')) return 'morning';
+  if (n.includes('even')) return 'evening';
+  if (n.includes('night')) return 'night';
+  return 'morning';
+}
+function profBadge(level){
+  const map = {0:'T', 1:'I', 2:'E', 'Trainee':'T', 'Intermediate':'I', 'Expert':'E'};
+  const l = map[level] ?? 'I';
+  return `<span class="badge ${l}">${l}</span>`;
+}
+
+// ---- shared loaders ----
+async function loadDepartments(){
+  departments = await get('/department');
+  const opts = departments.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  document.getElementById('sch-dept').innerHTML = `<option value="">All departments</option>` + opts;
+  document.getElementById('emp-dept').innerHTML = opts;
+}
+async function loadShifts(){
+  shifts = (await get('/shift')).sort((a,b)=> a.startTime.localeCompare(b.startTime));
+}
+async function loadEmployees(){
+  employees = await get('/employee');
+  const opts = employees.map(e=>`<option value="${e.id}">${e.fullName} (${e.departmentName||''})</option>`).join('');
+  document.getElementById('leave-emp').innerHTML = opts;
+  document.getElementById('ov-emp').innerHTML = opts;
+  document.getElementById('ra-emp').innerHTML = opts;
+  renderEmployeeTable();
+}
+
+// ==================== SCHEDULE TAB ====================
+function mondayOf(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay(); // Sun=0..Sat=6
+  const diff = (day === 0) ? 6 : day - 1;
+  d.setDate(d.getDate() - diff);
+  return d;
+}
+function fmt(d){ return d.toISOString().slice(0,10); }
+
+function renderWeekGrid(weekStart, assignments){
+  const days = [];
+  for (let i=0;i<7;i++){ const d = new Date(weekStart); d.setDate(d.getDate()+i); days.push(d); }
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  let thead = '<tr><th>Shift</th>' + days.map((d,i)=>`<th>${dayNames[i]}<br><span class="mono" style="font-weight:400">${fmt(d).slice(5)}</span></th>`).join('') + '</tr>';
+  let rows = '';
+  const orderedShifts = shifts.length ? shifts : [{id:1,name:'Morning'},{id:2,name:'Evening'},{id:3,name:'Night'}];
+
+  orderedShifts.forEach(shift=>{
+    const cls = shiftClass(shift.name);
+    let row = `<tr><td class="shift-label"><span class="shift-swatch sw-${cls}"></span>${shift.name}</td>`;
+    days.forEach(d=>{
+      const dateStr = fmt(d);
+      const matches = assignments.filter(a => a.shiftId === shift.id && a.date === dateStr);
+      let cell = '';
+      if (!matches.length){
+        cell = `<span class="muted mono" style="font-size:11px;">—</span>`;
+      } else {
+        matches.forEach(a=>{
+          if (a.status === 1 || a.employeeId === null){ // Vacant
+            cell += `<div class="slot vacant ${cls}">VACANT
+              <div><button class="btn" style="padding:3px 8px;font-size:11px;" onclick="openReassign(${a.id})">Reassign</button></div>
+            </div>`;
+          } else {
+            const emp = employees.find(e=>e.id===a.employeeId);
+            const badge = emp ? profBadge(emp.proficiencyLevel) : '';
+            cell += `<div class="slot ${cls}"><span class="name">${a.employeeName||'Unknown'}</span>${badge}</div>`;
+          }
+        });
+      }
+      row += `<td class="cell">${cell}</td>`;
+    });
+    row += '</tr>';
+    rows += row;
+  });
+
+  document.getElementById('week-grid').innerHTML = thead + rows;
+}
+
+function renderWeekStats(result){
+  document.getElementById('week-stats').innerHTML = `
+    <div class="stat"><span class="n">${result.totalDaysProcessed ?? '—'}</span><span class="l">Days Processed</span></div>
+    <div class="stat"><span class="n">${result.totalAssignmentsCreated ?? (result.length||0)}</span><span class="l">Assignments</span></div>
+    <div class="stat"><span class="n">${result.totalUnfilledSlots ?? 0}</span><span class="l">Unfilled Slots</span></div>
+  `;
+}
+function renderWarnings(warnings){
+  const el = document.getElementById('week-warnings');
+  if (!warnings || !warnings.length){
+    el.innerHTML = '<li class="muted" style="background:none;border:none;color:var(--muted)">No warnings — full coverage achieved.</li>';
+    return;
+  }
+  el.innerHTML = warnings.map(w => `<li class="${w.includes('NIGHT') || w.includes('only filled') ? '' : 'info'}">${w}</li>`).join('');
+}
+
+document.getElementById('btn-gen-week').addEventListener('click', async ()=>{
+  const weekInput = document.getElementById('sch-week').value;
+  const deptId = document.getElementById('sch-dept').value;
+  const body = { departmentId: deptId ? parseInt(deptId) : null };
+  if (weekInput) body.weekOf = weekInput;
+  try{
+    const result = await post('/rotation/generate-week', body);
+    const weekStart = result.weekStartDate ? new Date(result.weekStartDate + 'T00:00:00') : mondayOf(weekInput || fmt(new Date()));
+    document.getElementById('week-range-label').textContent = `Week ${result.weekStartDate} → ${result.weekEndDate}`;
+    renderWeekStats(result);
+    renderWeekGrid(weekStart, result.assignments || []);
+    renderWarnings(result.warnings);
+  } catch(e){ alert('Generate failed: ' + e.message); }
+});
+
+document.getElementById('btn-load-week').addEventListener('click', async ()=>{
+  const weekInput = document.getElementById('sch-week').value || fmt(new Date());
+  const weekStart = mondayOf(weekInput);
+  try{
+    const assignments = await get('/report/weekly/' + fmt(weekStart));
+    document.getElementById('week-range-label').textContent = `Week ${fmt(weekStart)} → ${fmt(new Date(weekStart.getTime()+6*86400000))} (loaded)`;
+    renderWeekStats(assignments);
+    renderWeekGrid(weekStart, assignments);
+    renderWarnings([]);
+  } catch(e){ alert('Load failed: ' + e.message); }
+});
+
+// ==================== EMPLOYEES TAB ====================
+function renderEmployeeTable(){
+  const tbody = document.querySelector('#emp-table tbody');
+  tbody.innerHTML = employees.map(e=>`
+    <tr>
+      <td>${e.fullName}</td>
+      <td>${e.departmentName||''}</td>
+      <td>${profBadge(e.proficiencyLevel)} ${e.proficiencyLevel}</td>
+      <td>${e.isNightEligible ? '✓' : '✕'}</td>
+      <td>${e.team||''}</td>
+      <td><span class="pill">${e.isActive ? 'Active' : 'Inactive'}</span></td>
+      <td>${e.isActive ? `<button class="btn" style="padding:4px 8px;font-size:11px;" onclick="deactivate(${e.id})">Deactivate</button>` : ''}</td>
+    </tr>
+  `).join('');
+}
+async function deactivate(id){
+  await api(`/employee/${id}/deactivate`, {method:'PATCH'});
+  await loadEmployees();
+}
+document.getElementById('btn-add-emp').addEventListener('click', async ()=>{
+  const el = document.getElementById('emp-msg');
+  try{
+    await post('/employee', {
+      fullName: document.getElementById('emp-name').value,
+      email: document.getElementById('emp-email').value,
+      hireDate: document.getElementById('emp-hire').value,
+      departmentId: parseInt(document.getElementById('emp-dept').value),
+      proficiencyLevel: parseInt(document.getElementById('emp-prof').value),
+      isNightEligible: document.getElementById('emp-night').checked,
+      team: document.getElementById('emp-team').value
+    });
+    msgBox(el, 'Employee added.', true);
+    await loadEmployees();
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+// ==================== DEPARTMENTS & SHIFTS TAB ====================
+async function renderDeptTable(){
+  document.getElementById('dept-table').innerHTML = departments.map(d=>`<tr><td>${d.name}</td><td>${d.description||''}</td></tr>`).join('');
+}
+async function renderShiftTable(){
+  document.getElementById('shift-table').innerHTML = shifts.map(s=>`<tr><td>${s.name}</td><td class="mono">${s.startTime}</td><td class="mono">${s.endTime}</td><td>${s.capacity}</td></tr>`).join('');
+}
+document.getElementById('btn-add-dept').addEventListener('click', async ()=>{
+  const el = document.getElementById('dept-msg');
+  try{
+    await post('/department', { name: document.getElementById('dept-name').value, description: document.getElementById('dept-desc').value });
+    msgBox(el,'Department added.', true);
+    await loadDepartments(); await renderDeptTable();
+  } catch(e){ msgBox(el, e.message, false); }
+});
+document.getElementById('btn-add-shift').addEventListener('click', async ()=>{
+  const el = document.getElementById('shift-msg');
+  try{
+    await post('/shift', {
+      name: document.getElementById('shift-name').value,
+      startTime: document.getElementById('shift-start').value + ':00',
+      endTime: document.getElementById('shift-end').value + ':00',
+      capacity: parseInt(document.getElementById('shift-capacity').value)
+    });
+    msgBox(el,'Shift added.', true);
+    await loadShifts(); await renderShiftTable();
+  } catch(e){ msgBox(el, e.message, false); }
+});
+async function loadHolidays(){
+  const holidays = await get('/holiday');
+  document.getElementById('hol-table').innerHTML = holidays.map(h=>`<tr><td>${h.name}</td><td>${h.date}</td><td>${h.isRecurringYearly?'Yes':'No'}</td></tr>`).join('');
+}
+document.getElementById('btn-add-hol').addEventListener('click', async ()=>{
+  const el = document.getElementById('hol-msg');
+  try{
+    await post('/holiday', {
+      name: document.getElementById('hol-name').value,
+      date: document.getElementById('hol-date').value,
+      isRecurringYearly: document.getElementById('hol-recurring').checked
+    });
+    msgBox(el,'Holiday added.', true);
+    await loadHolidays();
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+// ==================== LEAVE TAB ====================
+async function loadLeave(){
+  const leave = await get('/leave');
+  const statusNames = ['Pending','Approved','Rejected'];
+  document.getElementById('leave-table').innerHTML = leave.map(l=>`
+    <tr>
+      <td>${l.employeeName||l.employeeId}</td>
+      <td class="mono">${(l.startDate||'').slice(0,10)}</td>
+      <td class="mono">${(l.endDate||'').slice(0,10)}</td>
+      <td>${l.reason||''}</td>
+      <td><span class="pill">${statusNames[l.status] ?? l.status}</span></td>
+      <td>
+        ${l.status===0 ? `<button class="btn" style="padding:4px 8px;font-size:11px;" onclick="setLeaveStatus(${l.id},1)">Approve</button>
+        <button class="btn danger" style="padding:4px 8px;font-size:11px;" onclick="setLeaveStatus(${l.id},2)">Reject</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+async function setLeaveStatus(id, status){
+  await patch(`/leave/${id}/status`, { status });
+  await loadLeave();
+}
+document.getElementById('btn-add-leave').addEventListener('click', async ()=>{
+  const el = document.getElementById('leave-msg');
+  try{
+    await post('/leave', {
+      employeeId: parseInt(document.getElementById('leave-emp').value),
+      startDate: document.getElementById('leave-start').value,
+      endDate: document.getElementById('leave-end').value,
+      reason: document.getElementById('leave-reason').value
+    });
+    msgBox(el,'Leave request submitted.', true);
+    await loadLeave();
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+// ==================== POLICY TAB ====================
+let activePolicyId = null;
+async function loadPolicy(){
+  const p = await get('/schedulingpolicy/active');
+  activePolicyId = p.id;
+  document.getElementById('pol-maxdays').value = p.maxConsecutiveWorkingDays;
+  document.getElementById('pol-offdays').value = p.weeklyOffDays;
+  document.getElementById('pol-rest').value = p.minimumRestHours;
+  document.getElementById('pol-expert').checked = p.requireExpertPerShift;
+}
+document.getElementById('btn-save-policy').addEventListener('click', async ()=>{
+  const el = document.getElementById('policy-msg');
+  try{
+    await put(`/schedulingpolicy/${activePolicyId}`, {
+      name: 'Default',
+      maxConsecutiveWorkingDays: parseInt(document.getElementById('pol-maxdays').value),
+      weeklyOffDays: parseInt(document.getElementById('pol-offdays').value),
+      minimumRestHours: parseInt(document.getElementById('pol-rest').value),
+      requireExpertPerShift: document.getElementById('pol-expert').checked,
+      isActive: true
+    });
+    msgBox(el, 'Policy saved. Regenerate the schedule to apply it.', true);
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+// ==================== MANUAL OVERRIDE TAB ====================
+document.getElementById('btn-report-leave').addEventListener('click', async ()=>{
+  const el = document.getElementById('ov-msg');
+  try{
+    const result = await post('/manualoverride/emergency-leave', {
+      employeeId: parseInt(document.getElementById('ov-emp').value),
+      date: document.getElementById('ov-date').value,
+      reason: document.getElementById('ov-reason').value
+    });
+    msgBox(el, result.message, true);
+    if (result.vacatedAssignments && result.vacatedAssignments.length){
+      lastVacantAssignmentId = result.vacatedAssignments[0].id;
+      document.getElementById('ra-assignment').value = lastVacantAssignmentId;
+    }
+    const panel = document.getElementById('ov-candidates-panel');
+    if (result.suggestedReplacements && result.suggestedReplacements.length){
+      panel.style.display = 'block';
+      document.getElementById('ov-candidates-table').innerHTML = result.suggestedReplacements.map(c=>`
+        <tr>
+          <td>${c.fullName}</td>
+          <td>${profBadge(c.proficiencyLevel)} ${c.proficiencyLevel}</td>
+          <td>${c.shiftsWorkedThisWeek}</td>
+          <td>${c.prefersThisShift ? 'Yes' : 'No'}</td>
+          <td><button class="btn primary" style="padding:4px 8px;font-size:11px;" onclick="quickReassign(${c.employeeId})">Assign</button></td>
+        </tr>
+      `).join('');
+    } else {
+      panel.style.display = 'none';
+    }
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+function quickReassign(employeeId){
+  document.getElementById('ra-emp').value = employeeId;
+  document.getElementById('ra-assignment').value = lastVacantAssignmentId;
+  document.getElementById('btn-reassign').click();
+}
+function openReassign(assignmentId){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('[data-tab="override"]').classList.add('active');
+  document.getElementById('tab-override').classList.add('active');
+  document.getElementById('ra-assignment').value = assignmentId;
+  get(`/manualoverride/candidates/${assignmentId}`).then(list=>{
+    if (list.length){
+      const panel = document.getElementById('ov-candidates-panel');
+      panel.style.display = 'block';
+      lastVacantAssignmentId = assignmentId;
+      document.getElementById('ov-candidates-table').innerHTML = list.map(c=>`
+        <tr>
+          <td>${c.fullName}</td>
+          <td>${profBadge(c.proficiencyLevel)} ${c.proficiencyLevel}</td>
+          <td>${c.shiftsWorkedThisWeek}</td>
+          <td>${c.prefersThisShift ? 'Yes' : 'No'}</td>
+          <td><button class="btn primary" style="padding:4px 8px;font-size:11px;" onclick="quickReassign(${c.employeeId})">Assign</button></td>
+        </tr>
+      `).join('');
+    }
+  });
+}
+document.getElementById('btn-reassign').addEventListener('click', async ()=>{
+  const el = document.getElementById('ra-msg');
+  try{
+    await post('/manualoverride/reassign', {
+      assignmentId: parseInt(document.getElementById('ra-assignment').value),
+      newEmployeeId: parseInt(document.getElementById('ra-emp').value),
+      notes: document.getElementById('ra-notes').value
+    });
+    msgBox(el, 'Reassigned successfully.', true);
+  } catch(e){ msgBox(el, e.message, false); }
+});
+
+// ==================== INIT ====================
+(async function init(){
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('sch-week').value = today;
+  document.getElementById('ov-date').value = today;
+  try{
+    await loadDepartments();
+    await loadShifts();
+    await loadEmployees();
+    await renderDeptTable();
+    await renderShiftTable();
+    await loadHolidays();
+    await loadLeave();
+    await loadPolicy();
+  } catch(e){
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>

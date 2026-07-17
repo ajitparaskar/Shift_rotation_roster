@@ -1,0 +1,21 @@
+@baseUrl = https://localhost:7000/api
+
+### Generate rotation for a week (all departments)
+POST {{baseUrl}}/rotation/generate
+Content-Type: application/json
+
+{
+  "startDate": "2026-07-14",
+  "endDate": "2026-07-20",
+  "departmentId": null
+}
+
+### Generate rotation for one department only
+POST {{baseUrl}}/rotation/generate
+Content-Type: application/json
+
+{
+  "startDate": "2026-07-14",
+  "endDate": "2026-07-20",
+  "departmentId": 1
+}

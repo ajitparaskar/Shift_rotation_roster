@@ -1,0 +1,19 @@
+@baseUrl = https://localhost:7000/api
+
+### Daily schedule
+GET {{baseUrl}}/report/daily/2026-07-14
+
+### Weekly schedule
+GET {{baseUrl}}/report/weekly/2026-07-14
+
+### Monthly schedule
+GET {{baseUrl}}/report/monthly/2026/7
+
+### Employee history
+GET {{baseUrl}}/report/employee/1
+
+### Department schedule
+GET {{baseUrl}}/report/department/1?start=2026-07-14&end=2026-07-20
+
+### Shift utilization
+GET {{baseUrl}}/report/utilization?start=2026-07-14&end=2026-07-20
